@@ -54,7 +54,7 @@ def load_data_dblp(path: str =
     return rownetworks, features, split_ids, np.array(y)
 
 
-def load_data_yelp(path: str = 'dataset/YelpChi.mat',
+def load_data_yelp(path: str = '../../dataset/YelpChi.mat',
                    train_size: int = 0.8, meta: bool = True) -> \
         Tuple[list, np.array, list, np.array]:
     """

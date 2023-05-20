@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 from collections import namedtuple
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, average_precision_score
 
 import tensorflow as tf
 
@@ -85,9 +85,10 @@ def GraphConsis_main(neigh_dicts, features, labels, masks, num_classes, args):
                 loss = loss_fn(tf.convert_to_tensor(inputs_labels), predicted)
                 acc = accuracy_score(inputs_labels,
                                      predicted.numpy().argmax(axis=1))
+                aucpr = average_precision_score(inputs_labels, predicted.numpy()[:, 1])
             grads = tape.gradient(loss, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
-            print(f" loss: {loss.numpy():.4f}, acc: {acc:.4f}")
+            print(f" loss: {loss.numpy():.4f}, acc: {acc:.4f}, aucpr: {aucpr:.4f}")
 
         # validation
         print("Validating...")
@@ -96,9 +97,11 @@ def GraphConsis_main(neigh_dicts, features, labels, masks, num_classes, args):
         loss = loss_fn(tf.convert_to_tensor(labels[val_nodes]), val_results)
         val_acc = accuracy_score(labels[val_nodes],
                                  val_results.numpy().argmax(axis=1))
+        val_aucpr = average_precision_score(labels[val_nodes], val_results.numpy()[:, 1])
         print(f" Epoch: {epoch:d}, "
               f"loss: {loss.numpy():.4f}, "
-              f"acc: {val_acc:.4f}")
+              f"acc: {val_acc:.4f}, "
+              f"aucpr: {val_aucpr:.4f}")
 
     # testing
     print("Testing...")
@@ -182,7 +185,7 @@ def compute_diffusion_matrix(dst_nodes, neigh_dict, sample_size,
     # sample neighbors
     adj_mat_full = np.stack([vectorize(sample(n, neigh_dict[n]))
                              for n in dst_nodes])
-    nonzero_cols_mask = np.any(adj_mat_full.astype(np.bool), axis=0)
+    nonzero_cols_mask = np.any(adj_mat_full.astype(bool), axis=0)
 
     # compute diffusion matrix
     adj_mat = adj_mat_full[:, nonzero_cols_mask]
